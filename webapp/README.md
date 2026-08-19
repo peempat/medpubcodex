@@ -202,11 +202,25 @@ Then open <http://127.0.0.1:7860>.
 Override the binding with `GRADIO_SERVER_NAME`, `GRADIO_SERVER_PORT`, or
 `GRADIO_SHARE=true`.
 
+Serve it to other machines on your network with
+`GRADIO_SERVER_NAME=0.0.0.0` (the app has no authentication, so use a network
+you trust).
+
 Run the tests:
 
 ```bash
 python -m pytest webapp/tests -q
 ```
+
+### No GPU locally? Run it on Colab
+
+Open `webapp/colab_launch.ipynb` in Google Colab, pick a T4 GPU runtime, and
+run the cells. It clones this branch, installs the pinned dependencies, reads
+your token from a Colab secret named `HF_TOKEN`, checks which configurations
+fit in the available VRAM, and launches the app behind a public share link.
+
+A free T4 (15 GiB) fits every INT4 and INT8 configuration and the MedGemma
+baseline; the Gemma 4 12B baseline (24.98 GiB) needs a larger GPU.
 
 ## 9. How benchmark results are loaded
 
