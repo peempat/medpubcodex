@@ -27,18 +27,10 @@ import benchmark_results as br
 import model_registry
 import prompts
 import safety
+import theme
 from inference import RUNTIME, InferenceError, describe_runtime
 
 APP_TITLE = "Quantized Medical LLM - Health Information Assistant"
-
-HEADER_MARKDOWN = f"""
-# {APP_TITLE}
-
-**Research Demo** | Quantized Gemma 4 / MedGemma checkpoints from the MedPubCodex
-quantization benchmark.
-
-{safety.DISCLAIMER}
-"""
 
 SCOPE_MARKDOWN = """
 ### What this demo does and does not do
@@ -301,8 +293,11 @@ def build_interface() -> gr.Blocks:
     default_model = model_registry.default_model()
     default_use_case = prompts.USE_CASES_BY_KEY[prompts.DEFAULT_USE_CASE_KEY]
 
-    with gr.Blocks(title=APP_TITLE, theme=gr.themes.Soft()) as demo:
-        gr.Markdown(HEADER_MARKDOWN)
+    with gr.Blocks(
+        title=APP_TITLE, theme=theme.MEDICAL_THEME, css=theme.CUSTOM_CSS
+    ) as demo:
+        gr.HTML(theme.HEADER_HTML)
+        gr.HTML(theme.SAFETY_BANNER_HTML)
 
         with gr.Tabs():
             # ---------------------------------------------------------- #
@@ -310,7 +305,7 @@ def build_interface() -> gr.Blocks:
                 # Controls sit in a left rail beside the conversation so the model
                 # and use case stay visible and switchable while chatting.
                 with gr.Row(equal_height=False):
-                    with gr.Column(scale=1, min_width=300):
+                    with gr.Column(scale=1, min_width=300, elem_id="control-rail"):
                         model_dropdown = gr.Dropdown(
                             choices=model_registry.choice_labels(),
                             value=default_model.label,
@@ -325,7 +320,7 @@ def build_interface() -> gr.Blocks:
                         use_case_hint = gr.Markdown(
                             on_use_case_change(default_use_case.label)
                         )
-                        metrics_panel = gr.Markdown(IDLE_METRICS)
+                        metrics_panel = gr.Markdown(IDLE_METRICS, elem_id="metrics-panel")
                         with gr.Accordion("Selected model details", open=False):
                             model_card = gr.Markdown(render_model_card(default_model.label))
                         unload_button = gr.Button("Unload model / free GPU memory", size="sm")
@@ -335,6 +330,7 @@ def build_interface() -> gr.Blocks:
                     with gr.Column(scale=3):
                         chatbot = gr.Chatbot(
                             label="Conversation",
+                            elem_id="chat-window",
                             type="messages",
                             height=520,
                             show_copy_button=True,
@@ -381,12 +377,12 @@ def build_interface() -> gr.Blocks:
                 unload_button.click(on_unload_click, None, metrics_panel)
 
             # ---------------------------------------------------------- #
-            with gr.Tab("Benchmark Explorer"):
+            with gr.Tab("Benchmark Explorer", elem_id="benchmark-tab"):
                 problems = br.problems_markdown(RESULTS)
                 if problems:
-                    gr.Markdown(problems)
+                    gr.Markdown(problems, elem_id="problem-banner")
 
-                gr.Markdown(br.maturity_banner(RESULTS))
+                gr.Markdown(br.maturity_banner(RESULTS), elem_id="maturity-banner")
 
                 if RESULTS.available:
                     gr.Markdown("## Accuracy")
@@ -420,8 +416,8 @@ def build_interface() -> gr.Blocks:
                         value=RESULTS.table("tradeoff"), interactive=False, wrap=True
                     )
 
-                gr.Markdown(br.environment_markdown(RESULTS))
-                gr.Markdown(render_demo_runtime())
+                gr.Markdown(br.environment_markdown(RESULTS), elem_id="benchmark-env")
+                gr.Markdown(render_demo_runtime(), elem_id="demo-runtime")
 
                 provenance = br.provenance_markdown(RESULTS)
                 if provenance:
